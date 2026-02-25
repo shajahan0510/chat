@@ -349,30 +349,50 @@ def show_inbox():
     else:
         st.write("No sent requests yet.")
 
+# --- FIXED FUNCTION ---
 def show_new_request():
     st.subheader("🔍 Find User")
+    
+    # Initialize search results in session state if not exists
+    if 'search_results' not in st.session_state:
+        st.session_state['search_results'] = []
+
     search = st.text_input("Enter username to search")
+    
+    # 1. SEARCH LOGIC
     if st.button("Search"):
-        # Simple search logic
-        conn = sqlite3.connect(DB_NAME)
-        c = conn.cursor()
-        c.execute("SELECT username FROM users WHERE username LIKE ? AND username != ?", 
-                  (f"%{search}%", st.session_state['username']))
-        users = c.fetchall()
-        conn.close()
-        
-        if users:
-            for u in users:
-                col1, col2 = st.columns([3, 1])
-                col1.write(u[0])
-                if col2.button("Add", key=f"add_{u[0]}"):
-                    success, msg = send_request(st.session_state['user_id'], u[0])
-                    if success:
-                        st.success(msg)
-                    else:
-                        st.error(msg)
+        if search:
+            conn = sqlite3.connect(DB_NAME)
+            c = conn.cursor()
+            c.execute("SELECT username FROM users WHERE username LIKE ? AND username != ?", 
+                      (f"%{search}%", st.session_state['username']))
+            st.session_state['search_results'] = c.fetchall()
+            conn.close()
         else:
-            st.warning("User not found.")
+            st.session_state['search_results'] = []
+    
+    # 2. DISPLAY RESULTS LOGIC (Persistent)
+    # We use the results stored in session_state, not a local variable
+    results = st.session_state['search_results']
+    
+    if results:
+        for user_tuple in results:
+            found_user = user_tuple[0]
+            col1, col2 = st.columns([3, 1])
+            col1.write(found_user)
+            
+            # Create a unique key for each button based on username
+            if col2.button("Add", key=f"add_{found_user}"):
+                success, msg = send_request(st.session_state['user_id'], found_user)
+                if success:
+                    st.success(f"Request sent to {found_user}!")
+                    # Remove this user from the list so the button disappears
+                    st.session_state['search_results'].remove(user_tuple)
+                    st.rerun()
+                else:
+                    st.error(msg)
+    elif search and not results:
+        st.warning("User not found.")
 
 def show_chat_list():
     st.subheader("💬 Chats")
