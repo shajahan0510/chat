@@ -1001,31 +1001,41 @@ def show_chat_list():
                 preview = "Start a conversation..."
                 time_str = ""
             
-            st.markdown(f'''
-            <div class="chat-item" onclick="document.getElementById('chat_btn_{partner_id}').click()">
-                <div class="chat-avatar avatar-online" style="background: linear-gradient(135deg, {color1} 0%, {color2} 100%);">
+            # Chat item as a clickable card using columns
+            col_avatar, col_info, col_meta = st.columns([0.15, 0.65, 0.20])
+            
+            with col_avatar:
+                st.markdown(f'''
+                <div class="chat-avatar avatar-online" style="background: linear-gradient(135deg, {color1} 0%, {color2} 100%); margin: 0 auto;">
                     {initial}
                 </div>
-                <div class="chat-info">
-                    <div class="chat-name">
-                        {partner_name}
-                    </div>
-                    <div class="chat-preview">{preview}</div>
-                </div>
-                <div class="chat-meta">
-                    <div class="chat-time">{time_str}</div>
-                    {f'<div class="unread-badge">{unread}</div>' if unread > 0 else ''}
-                </div>
-            </div>
-            ''', unsafe_allow_html=True)
+                ''', unsafe_allow_html=True)
             
-            # Hidden button that gets triggered by clicking the chat item
-            st.markdown(f"<div style='display:none;'>", unsafe_allow_html=True)
-            if st.button("Open", key=f"chat_{partner_id}", id=f"chat_btn_{partner_id}"):
+            with col_info:
+                st.markdown(f'''
+                <div class="chat-name" style="font-size: 17px; font-weight: 600; color: #222; margin-bottom: 4px;">
+                    {partner_name}
+                </div>
+                <div class="chat-preview" style="font-size: 14px; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    {preview}
+                </div>
+                ''', unsafe_allow_html=True)
+            
+            with col_meta:
+                st.markdown(f'''
+                <div style="text-align: right;">
+                    <div class="chat-time" style="font-size: 12px; color: #aaa;">{time_str}</div>
+                    {f'<div class="unread-badge" style="margin-left: auto; margin-top: 5px;">{unread}</div>' if unread > 0 else ''}
+                </div>
+                ''', unsafe_allow_html=True)
+            
+            # Clickable button styled as the full row
+            if st.button(f"Open chat with {partner_name}", key=f"chat_{partner_id}", use_container_width=True):
                 st.session_state['current_chat_partner'] = partner_id
                 st.session_state['current_chat_partner_name'] = partner_name
                 st.rerun()
-            st.markdown("</div>", unsafe_allow_html=True)
+            
+            st.markdown("<div style='border-bottom: 1px solid #f0f0f0; margin: 10px 0;'></div>", unsafe_allow_html=True)
     
     st.markdown("</div>", unsafe_allow_html=True)
 
